@@ -2,212 +2,493 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Сёрфер волн</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#04050a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Сёрферволн</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --bg:#ffffff;
-    --ink:#2b3a3a;
-    --muted:#9fb0b0;
-    --faint:#c9d6d6;
-    --teal:#3aa99a;
-    --teal-soft:#e6f4f1;
-    --ring:#d8ece7;
+    --void:#04050a;--foam:#EDF4F2;--glow:#7FE8D8;--violet:#A79AFF;--ember:#F0B060;
+    --panel:rgba(16,22,36,.5);--line:rgba(237,244,242,.12);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  *{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation}
   html,body{height:100%}
   body{
+    color:var(--foam);background:var(--void);overflow-x:hidden;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg);
-    color:var(--ink);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);
-    overflow:hidden;
-    user-select:none;
+    -webkit-tap-highlight-color:transparent;
   }
-  .serif{font-family:Georgia,"Times New Roman",serif;font-style:italic}
-  .eyebrow{
-    letter-spacing:.42em;font-size:12px;color:var(--faint);
-    text-transform:uppercase;margin-bottom:22px;font-weight:600;
+  #cosmos{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+    background:radial-gradient(ellipse 120% 90% at 50% 34%, #0a0e18 0%, #060810 45%, #030408 100%)}
+  #cosmos::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at 50% 36%, transparent 42%, rgba(0,0,0,.55) 100%)}
+  #nebula{position:absolute;left:50%;top:50%;width:170vmax;height:170vmax;
+    transform:translate(-50%,-50%);opacity:.5;filter:blur(90px);
+    background:
+      radial-gradient(ellipse 26% 20% at 62% 32%, rgba(167,154,255,.09), transparent 70%),
+      radial-gradient(ellipse 30% 22% at 36% 64%, rgba(127,232,216,.07), transparent 70%);
+    animation:nebulaDrift 160s linear infinite;}
+  @keyframes nebulaDrift{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  #grain{position:absolute;inset:0;opacity:.045;mix-blend-mode:screen;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .star{position:absolute;border-radius:50%;background:#fff}
+  .star.bright{box-shadow:0 0 6px 1px rgba(255,255,255,.8)}
+  @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:1}}
+  #app{position:relative;z-index:1;max-width:430px;margin:0 auto;
+    padding:calc(24px + env(safe-area-inset-top)) 22px calc(40px + env(safe-area-inset-bottom));
+    min-height:100vh}
+  section{animation:fadeUp .45s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .eyebrow{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:6px;opacity:.45;text-transform:uppercase;text-align:center}
+  h1{font-family:Georgia,serif;font-weight:400;font-size:44px;text-align:center;margin:10px 0 0;
+    text-shadow:0 0 30px rgba(127,232,216,.25)}
+  h1 small{display:block;font-size:14px;opacity:.5;font-style:italic;margin-top:4px;letter-spacing:.5px}
+  h2{font-family:Georgia,serif;font-weight:400;font-size:26px;margin:2px 0 4px}
+  .muted{font-size:14px;opacity:.55}
+  .center{text-align:center}
+  .hidden{display:none!important}
+  .eclipseWrap{display:flex;justify-content:center;margin:30px 0 14px}
+  .eclipse{
+    position:relative;width:216px;height:216px;border-radius:50%;cursor:pointer;border:none;padding:0;
+    background:
+      radial-gradient(circle at 33% 27%, rgba(150,168,210,.34) 0%, rgba(60,72,105,.12) 34%, transparent 46%),
+      radial-gradient(circle at 70% 78%, rgba(110,130,180,.10) 0%, transparent 44%),
+      radial-gradient(circle at 50% 50%, #151926 0%, #0a0d16 52%, #030409 100%);
+    box-shadow:
+      inset -22px -28px 60px rgba(0,0,0,.95),
+      inset 14px 18px 46px rgba(150,170,220,.10),
+      0 0 20px 3px rgba(240,247,250,.75),
+      0 0 64px 16px rgba(127,232,216,.32),
+      0 0 150px 54px rgba(167,154,255,.16);
+    animation:coronaBreath 7s ease-in-out infinite;
+    transition:transform .25s;
   }
-  .count{
-    font-family:Georgia,serif;font-size:88px;line-height:1;color:var(--ink);
-    font-weight:400;transition:transform .25s ease;
+  .eclipse:active{transform:scale(.965)}
+  .eclipse::before{content:"";position:absolute;inset:-38px;border-radius:50%;pointer-events:none;
+background:conic-gradient(from 0deg, transparent 4%, rgba(240,247,250,.09) 12%, transparent 26%,
+      rgba(127,232,216,.10) 44%, transparent 58%, rgba(167,154,255,.10) 76%, transparent 92%);
+    filter:blur(15px);animation:smokeSpin 32s linear infinite;}
+  .eclipse::after{content:"";position:absolute;left:24%;top:15%;width:34%;height:20%;
+    border-radius:50%;background:radial-gradient(ellipse, rgba(220,232,255,.35), transparent 70%);
+    filter:blur(6px);pointer-events:none;}
+  .eclipse span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:Georgia,serif;font-style:italic;font-size:19px;letter-spacing:1.5px;
+    color:var(--foam);opacity:.92;text-shadow:0 0 14px rgba(127,232,216,.6)}
+  @keyframes coronaBreath{
+    0%,100%{box-shadow:inset -22px -28px 60px rgba(0,0,0,.95),inset 14px 18px 46px rgba(150,170,220,.10),
+      0 0 20px 3px rgba(240,247,250,.75),0 0 64px 16px rgba(127,232,216,.32),0 0 150px 54px rgba(167,154,255,.16)}
+    50%{box-shadow:inset -22px -28px 60px rgba(0,0,0,.95),inset 14px 18px 46px rgba(150,170,220,.13),
+      0 0 30px 6px rgba(240,247,250,.9),0 0 96px 26px rgba(127,232,216,.44),0 0 190px 74px rgba(167,154,255,.22)}
   }
-  .count.pulse{transform:scale(1.12)}
-  .count-label{
-    font-family:Georgia,serif;font-style:italic;color:var(--muted);
-    font-size:19px;margin-top:8px;margin-bottom:26px;
+  @keyframes smokeSpin{to{transform:rotate(360deg)}}
+  .eclipseMini{
+    width:92px;height:92px;border-radius:50%;margin:2px auto 4px;position:relative;
+    background:
+      radial-gradient(circle at 33% 27%, rgba(150,168,210,.32) 0%, transparent 46%),
+      radial-gradient(circle at 50% 50%, #141826 0%, #090c14 55%, #030409 100%);
+    box-shadow:inset -10px -12px 26px rgba(0,0,0,.9),inset 6px 8px 20px rgba(150,170,220,.10),
+      0 0 12px 2px rgba(240,247,250,.65),0 0 40px 10px rgba(127,232,216,.28);
+    animation:breathe 10s ease-in-out infinite;
   }
-  .wave-btn{
-    position:relative;width:300px;max-width:78vw;aspect-ratio:1;border-radius:50%;
-    border:none;background:#fff;color:var(--teal);cursor:pointer;
-    font-family:Georgia,serif;font-style:italic;font-size:26px;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 0 1px var(--ring), 0 24px 70px -20px rgba(58,169,154,.35);
-    transition:transform .12s ease, box-shadow .3s ease;
+  @keyframes breathe{0%,100%{transform:scale(1)}40%,55%{transform:scale(1.15)}}
+  .breathHint{font-size:10px;letter-spacing:4px;text-transform:uppercase;opacity:.4;text-align:center;margin:8px 0 12px}
+  .btn{
+    width:100%;padding:15px 18px;border-radius:999px;font-size:15px;cursor:pointer;margin-top:12px;
+    border:1px solid var(--line);background:rgba(237,244,242,.045);color:var(--foam);
+    font-family:inherit;letter-spacing:.4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    transition:box-shadow .3s,border-color .3s,transform .15s;
   }
-  .wave-btn:active{transform:scale(.96)}
-  .ripple{
-    position:absolute;inset:0;border-radius:50%;border:2px solid var(--teal);
-    opacity:0;pointer-events:none;
+  .btn:active{transform:scale(.98)}
+  .btn:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+  .btn-glow{border-color:rgba(127,232,216,.45);color:var(--glow);
+    box-shadow:0 0 16px rgba(127,232,216,.14), inset 0 0 16px rgba(127,232,216,.05)}
+  .btn-violet{border-color:rgba(167,154,255,.4);color:#CFC6FF;
+    box-shadow:0 0 16px rgba(167,154,255,.12), inset 0 0 16px rgba(167,154,255,.05)}
+  .btn-ghost{border:none;background:none;opacity:.5;font-size:13px;margin-top:4px;backdrop-filter:none}
+  .btn-small{width:auto;padding:9px 18px;font-size:13px;margin:0}
+  .row{display:flex;gap:10px}.row .btn{flex:1}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .timerLine{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px}
+  .timer{font-family:ui-monospace,Menlo,monospace;font-size:38px;font-weight:300;
+    text-shadow:0 0 22px rgba(127,232,216,.55)}
+  .wavebox{margin:2px -22px -6px}
+  .pointer{font-family:Georgia,serif;font-style:italic;font-size:20px;text-align:center;
+    min-height:52px;opacity:.85;margin:2px 14px;transition:opacity .8s;line-height:1.4}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--glow),var(--violet),var(--ember));margin:14px 0 2px;
   }
-  .ripple.go{animation:ripple 1.1s ease-out}
-  @keyframes ripple{
-    0%{opacity:.5;transform:scale(1)}
-    100%{opacity:0;transform:scale(1.6)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:32px;height:32px;border-radius:50%;cursor:pointer;
+    background:radial-gradient(circle at 38% 32%, #fff, #d2ece6 55%, #93d6c8);
+    box-shadow:0 0 18px rgba(127,232,216,.85), inset -2px -3px 6px rgba(0,60,50,.25);
   }
-  .hint{color:var(--muted);font-size:14px;margin-top:28px;text-align:center;max-width:320px}
-  .journal-btn{
-    margin-top:22px;width:300px;max-width:78vw;padding:18px;border-radius:16px;
-    background:#fff;border:1.5px solid var(--ring);color:var(--teal);
-    font-size:17px;cursor:pointer;transition:background .2s;
+  label{font-size:12px;opacity:.6;display:block;margin-top:10px;letter-spacing:.5px}
+  textarea{
+width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-height:120px;
+    background:rgba(8,12,22,.6);border:1px solid var(--line);color:var(--foam);font-family:inherit;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);line-height:1.45;
   }
-  .journal-btn:active{background:var(--teal-soft)}
-  .quote{
-    margin-top:34px;font-family:Georgia,serif;font-style:italic;
-    color:var(--faint);font-size:16px;text-align:center;max-width:340px;line-height:1.5;
-  }
-  /* Журнал */
-  .sheet{
-    position:fixed;inset:0;background:#fff;transform:translateY(100%);
-    transition:transform .32s cubic-bezier(.4,0,.2,1);
-    display:flex;flex-direction:column;
-    padding:calc(env(safe-area-inset-top) + 20px) 22px calc(env(safe-area-inset-bottom) + 20px);
-    z-index:10;
-  }
-  .sheet.open{transform:translateY(0)}
-  .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-  .sheet-head h2{font-family:Georgia,serif;font-weight:400;font-size:24px}
-  .close{border:none;background:none;font-size:26px;color:var(--muted);cursor:pointer;line-height:1}
-  .stats{display:flex;gap:12px;margin:16px 0 20px}
-  .stat{flex:1;background:var(--teal-soft);border-radius:14px;padding:14px;text-align:center}
-  .stat b{display:block;font-family:Georgia,serif;font-size:28px;color:var(--teal);font-weight:400}
-  .stat span{font-size:12px;color:var(--muted)}
-  .log{flex:1;overflow-y:auto}
-  .log-item{
-    display:flex;align-items:center;gap:12px;padding:14px 4px;
-    border-bottom:1px solid #f0f4f4;
-  }
-  .dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex:none}
-  .log-item .t{font-size:15px;color:var(--ink)}
-  .log-item .d{font-size:12px;color:var(--muted);margin-left:auto}
-  .empty{color:var(--muted);text-align:center;margin-top:60px;font-style:italic;font-family:Georgia,serif}
+  textarea:focus-visible{outline:1px solid var(--glow)}
+  .stats{display:flex;gap:8px;margin:14px 0 6px}
+  .stat{flex:1;text-align:center;padding:13px 4px;border:1px solid var(--line);border-radius:16px;
+    background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .stat b{display:block;font-family:ui-monospace,Menlo,monospace;font-size:19px;font-weight:400;color:var(--glow)}
+  .stat.v b{color:#CFC6FF}
+  .stat span{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;opacity:.5}
+  .entry{padding:13px 2px;border-top:1px solid var(--line)}
+  .entry .top{display:flex;justify-content:space-between;font-size:13px}
+  .entry .note{font-family:Georgia,serif;font-style:italic;font-size:16px;margin-top:7px;opacity:.85;line-height:1.45}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .hint{font-size:12px;opacity:.42;text-align:center;margin-top:12px;line-height:1.5}
+  .legend{font-size:12px;opacity:.6;margin:6px 0 12px}
+  .quote{font-family:Georgia,serif;font-style:italic;font-size:15px;opacity:.55;text-align:center;
+    margin:28px 12px 0;line-height:1.55}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
-  <div class="eyebrow">Сёрфер&nbsp;&nbsp;волн</div>
-  <div class="count" id="count">0</div>
-  <div class="count-label">волн рассмотрено</div>
+<div id="cosmos">
+  <div id="nebula"></div>
+  <div id="stars"></div>
+  <div id="grain"></div>
+</div>
+<div id="app">
 
-  <button class="wave-btn" id="waveBtn">
-    <span class="ripple" id="ripple"></span>
-    <span>волна&nbsp;пришла</span>
-  </button>
-
-  <div class="hint">Счётчик считает не воздержание, а взгляды.</div>
-  <button class="journal-btn" id="openJournal">Журнал</button>
-  <div class="quote">«То, что наблюдает тягу, никогда не курило.»</div>
-
-  <!-- Журнал -->
-  <div class="sheet" id="sheet">
-    <div class="sheet-head">
-      <h2>Журнал</h2>
-      <button class="close" id="closeJournal">✕</button>
+  <section id="home">
+    <p class="eyebrow">Сёрфер волн</p>
+    <h1><span id="watchedCount">0</span><small id="watchedWord">волн рассмотрено</small></h1>
+    <div class="eclipseWrap">
+      <button class="eclipse" id="startBtn" aria-label="Начать наблюдение волны"><span>волна пришла</span></button>
     </div>
+    <p class="muted center" style="font-size:13px">Счётчик считает не воздержание, а взгляды.</p>
+    <div class="row">
+      <button class="btn btn-glow" id="historyBtn">Журнал <span id="totalCount" style="opacity:.6"></span></button>
+    </div>
+    <p class="quote" id="quote"></p>
+  </section>
+
+  <section id="wave" class="hidden">
+    <div class="topbar">
+      <button class="btn btn-small" id="cancelBtn" aria-label="Отменить наблюдение">✕ отмена</button>
+      <span class="muted" style="font-size:12px">волна живёт 15–20 минут</span>
+    </div>
+    <div class="eclipseMini" aria-hidden="true"></div>
+    <p class="breathHint">дыши вместе с ней</p>
+    <div class="timerLine">
+      <span class="timer" id="timer">0:00</span>
+      <span class="muted mono" style="font-size:13px" id="peakLive"></span>
+    </div>
+    <div class="wavebox">
+      <svg viewBox="0 0 400 150" style="width:100%;display:block" aria-hidden="true">
+        <defs>
+          <linearGradient id="wf" x1="0" y1="0" x2="0" y2="1">
+            <stop id="wfTop" offset="0%" stop-color="#F0B060" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#04050a" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path id="waveGlow" fill="none" stroke="#F0B060" stroke-width="2" stroke-linecap="round"
+              style="filter:drop-shadow(0 0 9px rgba(240,176,96,.9))"/>
+        <path id="wavePath" fill="url(#wf)"/>
+      </svg>
+    </div>
+    <p class="pointer" id="pointer"></p>
+    <label>Сила тяги сейчас — <span id="intVal">6</span></label>
+    <input type="range" id="intensity" min="0" max="10" value="6" aria-label="Сила тяги">
+    <div class="row" style="margin-top:20px">
+      <button class="btn btn-glow" id="watchedBtn">Волна прошла</button>
+      <button class="btn" style="opacity:.8" id="smokedBtn">Я закурил</button>
+    </div>
+    <p class="hint">Обе кнопки честные. Закурил — тоже запиши: ты успел посмотреть.</p>
+  </section>
+
+  <section id="note" class="hidden">
+    <h2 id="noteTitle">Волна прошла.</h2>
+    <p class="muted" id="noteStats"></p>
+    <svg id="curve" viewBox="0 0 400 90" style="width:100%;margin:12px 0 2px" aria-label="Кривая волны"></svg>
+<p class="hint" style="margin:-2px 0 8px">кривая твоей волны — как она жила</p>
+    <label style="margin:8px 0 8px">Что ты видел внутри волны? Пиши потоком, не редактируя.</label>
+    <textarea id="noteText" placeholder="Горело под рёбрами. Мысль: «одну и всё». Кто это сказал?.."></textarea>
+    <button class="btn btn-glow" id="saveBtn">Сохранить волну</button>
+    <button class="btn btn-ghost" id="saveGhostBtn">Сохранить без заметки</button>
+  </section>
+
+  <section id="history" class="hidden">
+    <div class="topbar">
+      <button class="btn btn-small" id="backBtn">← назад</button>
+      <button class="btn btn-small btn-violet" id="exportBtn">резерв данных</button>
+    </div>
+    <h2>Журнал волн</h2>
+    <p class="hint hidden" id="exportOk" style="text-align:left;margin:4px 0">Скопировано. Вставь в заметки — это твой резерв.</p>
     <div class="stats">
-      <div class="stat"><b id="stToday">0</b><span>сегодня</span></div>
-      <div class="stat"><b id="stTotal">0</b><span>всего</span></div>
-      <div class="stat"><b id="stStreak">0</b><span>дней подряд</span></div>
+      <div class="stat"><b id="stWatched">0</b><span>рассмотрено</span></div>
+      <div class="stat v"><b id="stAvg">0:00</b><span>средний сёрф</span></div>
+      <div class="stat"><b id="stStreak">0</b><span>серия подряд</span></div>
     </div>
-    <div class="log" id="log"></div>
-  </div>
+    <svg id="chart" viewBox="0 0 400 90" style="width:100%;margin:8px 0 0" aria-label="График пиков тяги"></svg>
+    <p class="legend" id="chartLegend" style="display:none">
+      <span style="color:#7FE8D8">■</span> рассмотрел&nbsp;&nbsp;<span style="color:#F0B060">■</span> закурил
+    </p>
+    <div id="entries"></div>
+    <p class="muted hidden" id="emptyMsg" style="margin-top:12px">
+      Пока пусто. Первая волна сама придёт — открой приложение в этот момент.
+    </p>
+  </section>
+</div>
 
 <script>
-const tg = window.Telegram?.WebApp;
-try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.('#ffffff'); tg?.setBackgroundColor?.('#ffffff'); }catch(e){}
+(function(){
+var KEY='wave-surfer-data';
+var POINTERS=[
+  "Где это в теле? Найди точное место.",
+  "Не гони и не держи. Просто смотри.",
+  "Кто сейчас хочет?",
+  "Какая она на ощупь — горячая, тянущая, пустая?",
+  "Волна поднимается или уже спадает?",
+  "Между тобой и ею есть расстояние. Заметь его.",
+  "Ты смотришь на неё. Значит, ты — не она."
+];
+var QUOTES=[
+  "Тяга — это персонаж, стучащий изнутри. Не открывай. Смотри в глазок.",
+  "Свет виден по краям даже тогда, когда диск закрыл солнце.",
+  "Волну нельзя остановить. Но можно не быть волной.",
+  "То, что наблюдает тягу, никогда не курило.",
+  "Каждая рассмотренная волна ослабляет петлю. Это нейробиология.",
+  "Не борись. Борьба — та же волна, надетая наизнанку."
+];
+var waves=[],seconds=0,intensity=6,samples=[],outcome=null,startTs=0;
+var tTimer=null,tPointer=null,raf=null,phase=0;
+var reduced=false;
+try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+try{waves=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){waves=[]}
 
-const KEY='serfer_waves';
-let waves=[]; // массив timestamp (ms)
+function save(){try{localStorage.setItem(KEY,JSON.stringify(waves))}catch(e){}}
+function $(id){return document.getElementById(id)}
+function show(id){['home','wave','note','history'].forEach(function(s){
+  var el=$(s),on=(s===id);
+  el.classList.toggle('hidden',!on);
+  if(on){el.style.animation='none';void el.offsetWidth;el.style.animation=''}
+})}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function fmtDate(ts){var d=new Date(ts);
+  return d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})+', '+
+         d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+function peakOf(arr){var m=0;for(var i=0;i<arr.length;i++)if(arr[i].v>m)m=arr[i].v;return m}
 
-function haptic(){ try{ tg?.HapticFeedback?.impactOccurred('medium'); }catch(e){} }
+var tg=null;
+try{
+  if(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initData!==undefined){
+    tg=window.Telegram.WebApp;
+    tg.ready();tg.expand();
+    if(tg.setHeaderColor)tg.setHeaderColor('#04050a');
+    if(tg.setBackgroundColor)tg.setBackgroundColor('#04050a');
+    if(tg.disableVerticalSwipes)tg.disableVerticalSwipes();
+  }
+}catch(e){tg=null}
 
-// ---- хранилище: CloudStorage (синк между устройствами) с фолбэком на localStorage ----
-function load(cb){
-  if(tg?.CloudStorage){
-    tg.CloudStorage.getItem(KEY,(err,val)=>{
-      if(!err && val){ try{ waves=JSON.parse(val)||[] }catch(e){} }
-      else { try{ waves=JSON.parse(localStorage.getItem(KEY))||[] }catch(e){} }
-      cb();
+function buzz(p){
+  try{
+    if(tg&&tg.HapticFeedback){
+      if(Array.isArray(p))tg.HapticFeedback.notificationOccurred('success');
+      else tg.HapticFeedback.impactOccurred('light');
+    }else if(navigator.vibrate)navigator.vibrate(p);
+  }catch(e){}
+}
+
+var CHUNK=3800;
+function cloudSave(){
+  if(!(tg&&tg.CloudStorage))return;
+  try{
+    var slim=waves.
+map(function(w){return{ts:w.ts,dur:w.dur,peak:w.peak,end:w.end,outcome:w.outcome,note:w.note}});
+    var txt=JSON.stringify(slim),n=Math.ceil(txt.length/CHUNK)||1;
+    tg.CloudStorage.setItem('waves_n',String(n),function(){});
+    for(var i=0;i<n;i++){
+      tg.CloudStorage.setItem('waves_'+i,txt.slice(i*CHUNK,(i+1)*CHUNK),function(){});
+    }
+  }catch(e){}
+}
+function cloudRestore(cb){
+  if(!(tg&&tg.CloudStorage))return cb(null);
+  try{
+    tg.CloudStorage.getItem('waves_n',function(err,val){
+      if(err||!val)return cb(null);
+      var n=parseInt(val,10)||0,keys=[];
+      for(var i=0;i<n;i++)keys.push('waves_'+i);
+      tg.CloudStorage.getItems(keys,function(err2,map){
+        if(err2||!map)return cb(null);
+        var txt='';for(var i=0;i<n;i++)txt+=(map['waves_'+i]||'');
+        try{cb(JSON.parse(txt))}catch(e){cb(null)}
+      });
     });
-  } else {
-    try{ waves=JSON.parse(localStorage.getItem(KEY))||[] }catch(e){}
-    cb();
-  }
+  }catch(e){cb(null)}
 }
-function save(){
-  const s=JSON.stringify(waves);
-  try{ localStorage.setItem(KEY,s) }catch(e){}
-  try{ tg?.CloudStorage?.setItem(KEY,s) }catch(e){}
-}
-
-const $=id=>document.getElementById(id);
-const isSameDay=(a,b)=>{const x=new Date(a),y=new Date(b);return x.getFullYear()===y.getFullYear()&&x.getMonth()===y.getMonth()&&x.getDate()===y.getDate();};
-
-function render(){
-  $('count').textContent=waves.length;
-  // статистика
-  const now=Date.now();
-  $('stTotal').textContent=waves.length;
-  $('stToday').textContent=waves.filter(t=>isSameDay(t,now)).length;
-  $('stStreak').textContent=streak();
-  // журнал
-  const log=$('log');
-  if(!waves.length){ log.innerHTML='<div class="empty">Пока ни одной волны.<br>Заметил тягу — нажми кнопку.</div>'; return; }
-  const days={};
-  [...waves].reverse().forEach(t=>{
-    const d=new Date(t);
-    const key=d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
-    (days[key]=days[key]||[]).push(t);
+if(waves.length===0){
+  cloudRestore(function(cloud){
+    if(cloud&&cloud.length){waves=cloud;save();renderHome()}
   });
-  log.innerHTML=Object.entries(days).map(([day,arr])=>
-    arr.map(t=>{
-      const time=new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-      return `<div class="log-item"><span class="dot"></span><span class="t">Волна рассмотрена</span><span class="d">${day}, ${time}</span></div>`;
-    }).join('')
-  ).join('');
 }
-
-function streak(){
-  if(!waves.length) return 0;
-  const dayset=new Set(waves.map(t=>{const d=new Date(t);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();}));
-  let s=0; let cur=new Date();
-  for(;;){
-    const k=cur.getFullYear()+'-'+cur.getMonth()+'-'+cur.getDate();
-    if(dayset.has(k)){ s++; cur.setDate(cur.getDate()-1); }
-    else break;
+(function(){
+  var box=$('stars');
+  for(var i=0;i<54;i++){
+    var s=document.createElement('div');s.className='star';
+    var sz=Math.random()<.82?1:2;
+    if(sz>1&&Math.random()<.4)s.className='star bright';
+    s.style.width=s.style.height=sz+'px';
+    s.style.left=(Math.random()*100).toFixed(2)+'%';
+    s.style.top=(Math.random()*100).toFixed(2)+'%';
+    s.style.opacity=(.18+Math.random()*.55).toFixed(2);
+    if(!reduced&&Math.random()<.35){
+      s.style.animation='twinkle '+(4+Math.random()*7).toFixed(1)+'s ease-in-out '+(Math.random()*6).toFixed(1)+'s infinite';
+    }
+    box.appendChild(s);
   }
-  return s;
+})();
+
+function renderHome(){
+  var w=waves.filter(function(x){return x.outcome==='watched'}).length;
+  $('watchedCount').textContent=w;
+  var n=w%100,n1=w%10;
+  $('watchedWord').textContent=
+    (n>10&&n<20)?'волн рассмотрено':(n1===1)?'волна рассмотрена':(n1>1&&n1<5)?'волны рассмотрено':'волн рассмотрено';
+  $('totalCount').textContent=waves.length?('· '+waves.length):'';
+  $('quote').textContent='«'+QUOTES[Math.floor(Math.random()*QUOTES.length)]+'»';
+}
+function setHeat(){
+  var hot=intensity>5.5;
+  $('wfTop').setAttribute('stop-color',hot?'#F0B060':'#7FE8D8');
+  $('waveGlow').setAttribute('stroke',hot?'#F0B060':'#7FE8D8');
+  $('waveGlow').style.filter='drop-shadow(0 0 9px '+(hot?'rgba(240,176,96,.9)':'rgba(127,232,216,.9)')+')';
+}
+function startWave(){
+  startTs=Date.now();seconds=0;intensity=6;samples=[{t:0,v:6}];outcome=null;
+  $('intensity').value=6;$('intVal').textContent='6';$('timer').textContent='0:00';
+  $('peakLive').textContent='пик 6';
+  $('noteText').value='';setHeat();
+  var pi=Math.floor(Math.random()*POINTERS.length);
+  $('pointer').textContent=POINTERS[pi];
+  show('wave');buzz(30);
+  tTimer=setInterval(function(){seconds++;$('timer').textContent=fmt(seconds);
+    if(seconds%30===0)samples.push({t:seconds,v:intensity});},1000);
+  tPointer=setInterval(function(){pi=(pi+1)%POINTERS.length;
+    var p=$('pointer');p.style.opacity=0;
+    setTimeout(function(){p.textContent=POINTERS[pi];p.style.opacity=.85},800);},24000);
+  drawLoop();
+}
+function onIntensity(){
+  intensity=+$('intensity').value;
+  $('intVal').textContent=intensity;
+  samples.push({t:seconds,v:intensity});
+  $('peakLive').textContent='пик '+peakOf(samples);
+  setHeat();
+}
+function drawLoop(){
+  var W=400,H=150,mid=H*0.60,a=5+(intensity/10)*46,pts=[];
+  for(var x=0;x<=W;x+=4){
+    var y=mid-Math.sin(x/52+phase)*a
+           -Math.sin(x/23-phase*1.5)*a*0.22
+           -Math.sin(x/97+phase*0.6)*a*0.30;
+    pts.push(x+','+y.toFixed(1));
+  }
+  var line='M'+pts.join(' L');
+  $('waveGlow').setAttribute('d',line);
+  $('wavePath').setAttribute('d',line+' L'+W+','+H+' L0,'+H+' Z');
+  if(!reduced)phase+=0.022;
+  raf=requestAnimationFrame(drawLoop);
+}
+function stopLoops(){clearInterval(tTimer);clearInterval(tPointer);cancelAnimationFrame(raf)}
+function cancelWave(){stopLoops();show('home');renderHome()}
+
+function smoothPath(pts){
+  if(pts.length<2)return'';
+  var d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);
+  for(var i=0;i<pts.length-1;i++){
+var p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    d+=' C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+','+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+
+      (p2[0]-(p3[0]-p1[0])/6).toFixed(1)+','+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+
+      p2[0].toFixed(1)+','+p2[1].toFixed(1);
+  }
+  return d;
+}
+function renderCurve(){
+  var c=$('curve');c.innerHTML='';
+  if(samples.length<2){c.style.display='none';return}
+  c.style.display='block';
+  var maxT=Math.max(samples[samples.length-1].t,1);
+  var pts=samples.map(function(s){return[10+(s.t/maxT)*380,80-(s.v/10)*68]});
+  var col=outcome==='watched'?'#7FE8D8':'#F0B060';
+  var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',smoothPath(pts));
+  path.setAttribute('fill','none');path.setAttribute('stroke',col);
+  path.setAttribute('stroke-width','2');path.setAttribute('stroke-linecap','round');
+  path.style.filter='drop-shadow(0 0 6px '+col+')';
+  c.appendChild(path);
+}
+function finishWave(result){
+  stopLoops();outcome=result;buzz(result==='watched'?[20,60,20]:60);
+  $('noteTitle').textContent=result==='watched'?'Волна прошла.':'Записано без стыда.';
+  $('noteStats').textContent=fmt(seconds)+' · пик '+peakOf(samples)+'/10';
+  renderCurve();show('note');
+}
+function saveWave(){
+  waves.push({ts:startTs,dur:seconds,peak:peakOf(samples),end:intensity,outcome:outcome,
+    note:$('noteText').value.trim(),curve:samples.slice(-60)});
+  save();cloudSave();renderHome();show('home');
+}
+function bestStreak(){
+  var best=0,cur=0;
+  waves.forEach(function(w){if(w.outcome==='watched'){cur++;if(cur>best)best=cur}else cur=0});
+  return best;
+}
+function renderHistory(){
+  var wl=waves.filter(function(x){return x.outcome==='watched'});
+  var w=wl.length,t=waves.length;
+  $('stWatched').textContent=t?(w+' / '+t):'0';
+  var avg=wl.length?Math.round(wl.reduce(function(a,x){return a+x.dur},0)/wl.length):0;
+  $('stAvg').textContent=fmt(avg);
+  $('stStreak').textContent=bestStreak();
+  $('emptyMsg').classList.toggle('hidden',t>0);
+  $('chartLegend').style.display=t?'block':'none';
+  var c=$('chart');c.innerHTML='';c.style.display=t?'block':'none';
+  var last=waves.slice(-24);
+  last.forEach(function(wv,i){
+    var bw=Math.min(18,400/last.length-4),x=(400/last.length)*i+2,h=Math.max(4,(wv.peak/10)*76);
+    var r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x);r.setAttribute('y',86-h);r.setAttribute('width',bw);
+    r.setAttribute('height',h);r.setAttribute('rx',4);r.setAttribute('opacity','.9');
+    r.setAttribute('fill',wv.outcome==='watched'?'#7FE8D8':'#F0B060');
+    c.appendChild(r);
+  });
+  $('entries').innerHTML=waves.slice().reverse().map(function(wv){
+    return '<div class="entry"><div class="top"><span style="opacity:.65">'+fmtDate(wv.ts)+
+    '</span><span class="mono" style="color:'+(wv.outcome==='watched'?'#7FE8D8':'#F0B060')+'">'+
+    fmt(wv.dur)+' · пик '+wv.peak+'</span></div>'+
+    (wv.note?'<p class="note">'+wv.note.replace(/</g,'&lt;')+'</p>':'')+'</div>';
+  }).join('');
+}
+function exportData(){
+  var txt=JSON.stringify(waves);
+  function ok(){$('exportOk').classList.remove('hidden');
+    setTimeout(function(){$('exportOk').classList.add('hidden')},3000)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok,function(){window.prompt('Скопируй вручную:',txt)});
+  }else{window.prompt('Скопируй вручную:',txt)}
 }
 
-$('waveBtn').addEventListener('click',()=>{
-  waves.push(Date.now());
-  save();
-  haptic();
-  const c=$('count'); c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
-  const r=$('ripple'); r.classList.remove('go'); void r.offsetWidth; r.classList.add('go');
-  render();
-});
-
-$('openJournal').addEventListener('click',()=>{ render(); $('sheet').classList.add('open'); });
-$('closeJournal').addEventListener('click',()=>$('sheet').classList.remove('open'));
-
-load(render);
+$('startBtn').addEventListener('click',startWave);
+$('historyBtn').addEventListener('click',function(){show('history');renderHistory()});
+$('backBtn').addEventListener('click',function(){show('home');renderHome()});
+$('cancelBtn').addEventListener('click',cancelWave);
+$('watchedBtn').addEventListener('click',function(){finishWave('watched')});
+$('smokedBtn').addEventListener('click',function(){finishWave('smoked')});
+$('saveBtn').addEventListener('click',saveWave);
+$('saveGhostBtn').addEventListener('click',saveWave);
+$('intensity').addEventListener('input',onIntensity);
+$('exportBtn').addEventListener('click',exportData);
+renderHome();
+})();
 </script>
 </body>
 </html>
