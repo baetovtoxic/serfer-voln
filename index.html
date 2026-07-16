@@ -90,10 +90,11 @@ background:conic-gradient(from 0deg, transparent 4%, rgba(240,247,250,.09) 12%, 
       radial-gradient(circle at 50% 50%, #141826 0%, #090c14 55%, #030409 100%);
     box-shadow:inset -10px -12px 26px rgba(0,0,0,.9),inset 6px 8px 20px rgba(150,170,220,.10),
       0 0 12px 2px rgba(240,247,250,.65),0 0 40px 10px rgba(127,232,216,.28);
-    animation:breathe 10s ease-in-out infinite;
+    animation:breathe 8s ease-in-out infinite;
   }
-  @keyframes breathe{0%,100%{transform:scale(1)}40%,55%{transform:scale(1.15)}}
-  .breathHint{font-size:10px;letter-spacing:4px;text-transform:uppercase;opacity:.4;text-align:center;margin:8px 0 12px}
+  @keyframes breathe{0%{transform:scale(.82)}50%{transform:scale(1.2)}100%{transform:scale(.82)}}
+  .breathHint{font-size:11px;letter-spacing:5px;text-transform:uppercase;opacity:.6;text-align:center;
+    margin:10px 0 12px;transition:opacity .3s;color:var(--glow)}
   .btn{
     width:100%;padding:15px 18px;border-radius:999px;font-size:15px;cursor:pointer;margin-top:12px;
     border:1px solid var(--line);background:rgba(237,244,242,.045);color:var(--foam);
@@ -175,8 +176,8 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
       <button class="btn btn-small" id="cancelBtn" aria-label="Отменить наблюдение">✕ отмена</button>
       <span class="muted" style="font-size:12px">волна живёт 15–20 минут</span>
     </div>
-    <div class="eclipseMini" aria-hidden="true"></div>
-    <p class="breathHint">дыши вместе с ней</p>
+    <div class="eclipseMini" id="miniOrb" aria-hidden="true"></div>
+    <p class="breathHint" id="breathHint">дыши вместе с ней</p>
     <div class="timerLine">
       <span class="timer" id="timer">0:00</span>
       <span class="muted mono" style="font-size:13px" id="peakLive"></span>
@@ -259,7 +260,7 @@ var QUOTES=[
   "Не борись. Борьба — та же волна, надетая наизнанку."
 ];
 var waves=[],seconds=0,intensity=6,samples=[],outcome=null,startTs=0;
-var tTimer=null,tPointer=null,raf=null,phase=0;
+var tTimer=null,tPointer=null,tBreath=null,raf=null,phase=0;
 var reduced=false;
 try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
 try{waves=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){waves=[]}
@@ -370,6 +371,7 @@ function startWave(){
   var pi=Math.floor(Math.random()*POINTERS.length);
   $('pointer').textContent=POINTERS[pi];
   show('wave');buzz(30);
+  startBreath();
   tTimer=setInterval(function(){seconds++;$('timer').textContent=fmt(seconds);
     if(seconds%30===0)samples.push({t:seconds,v:intensity});},1000);
   tPointer=setInterval(function(){pi=(pi+1)%POINTERS.length;
@@ -398,7 +400,19 @@ function drawLoop(){
   if(!reduced)phase+=0.022;
   raf=requestAnimationFrame(drawLoop);
 }
-function stopLoops(){clearInterval(tTimer);clearInterval(tPointer);cancelAnimationFrame(raf)}
+function startBreath(){
+  var orb=$('miniOrb'),hint=$('breathHint');
+  if(orb){orb.style.animation='none';void orb.offsetWidth;orb.style.animation=''}
+  hint.textContent='вдох';buzz(20);
+  var inhale=true;
+  tBreath=setInterval(function(){
+    inhale=!inhale;
+    hint.style.opacity=0;
+    setTimeout(function(){hint.textContent=inhale?'вдох':'выдох';hint.style.opacity=.6},280);
+    buzz(inhale?20:15);
+  },4000);
+}
+function stopLoops(){clearInterval(tTimer);clearInterval(tPointer);clearInterval(tBreath);cancelAnimationFrame(raf)}
 function cancelWave(){stopLoops();show('home');renderHome()}
 
 function smoothPath(pts){
