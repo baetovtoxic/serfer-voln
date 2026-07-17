@@ -147,6 +147,11 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
   .legend{font-size:12px;opacity:.6;margin:6px 0 12px}
   .quote{font-family:Georgia,serif;font-style:italic;font-size:15px;opacity:.55;text-align:center;
     margin:28px 12px 0;line-height:1.55}
+  .resume{border:1px solid rgba(167,154,255,.4);border-radius:18px;padding:14px 14px 8px;margin-bottom:6px;
+    background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 0 20px rgba(167,154,255,.12)}
+  .resume-t{font-size:14px;opacity:.85;text-align:center;margin-bottom:2px}
+  .resume .btn{margin-top:8px}
   @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -159,6 +164,13 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
 <div id="app">
 
   <section id="home">
+    <div id="resumeBar" class="resume hidden">
+      <p class="resume-t">Незакрытая волна <span id="resumeTime" class="mono"></span></p>
+      <div class="row">
+        <button class="btn btn-glow" id="resumeBtn">Продолжить</button>
+        <button class="btn" id="resumePassed">Уже прошла</button>
+      </div>
+    </div>
     <p class="eyebrow">Сёрфер волн</p>
     <h1><span id="watchedCount">0</span><small id="watchedWord">волн рассмотрено</small></h1>
     <div class="eclipseWrap">
@@ -242,6 +254,7 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
 <script>
 (function(){
 var KEY='wave-surfer-data';
+var LIVE='wave-surfer-live';
 var POINTERS=[
   "Где это в теле? Найди точное место.",
   "Не гони и не держи. Просто смотри.",
@@ -266,6 +279,8 @@ try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(
 try{waves=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){waves=[]}
 
 function save(){try{localStorage.setItem(KEY,JSON.stringify(waves))}catch(e){}}
+function saveLive(){try{localStorage.setItem(LIVE,JSON.stringify({startTs:startTs,seconds:seconds,intensity:intensity,samples:samples}))}catch(e){}}
+function clearLive(){try{localStorage.removeItem(LIVE)}catch(e){}}
 function $(id){return document.getElementById(id)}
 function show(id){['home','wave','note','history'].forEach(function(s){
   var el=$(s),on=(s===id);
@@ -356,6 +371,15 @@ function renderHome(){
     (n>10&&n<20)?'волн рассмотрено':(n1===1)?'волна рассмотрена':(n1>1&&n1<5)?'волны рассмотрено':'волн рассмотрено';
   $('totalCount').textContent=waves.length?('· '+waves.length):'';
   $('quote').textContent='«'+QUOTES[Math.floor(Math.random()*QUOTES.length)]+'»';
+  refreshResume();
+}
+function refreshResume(){
+  var d=null;try{d=JSON.parse(localStorage.getItem(LIVE))}catch(e){}
+  var bar=$('resumeBar');if(!bar)return;
+  if(d&&d.startTs){
+    bar.classList.remove('hidden');
+    $('resumeTime').textContent=new Date(d.startTs).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+' · '+fmt(d.seconds||0);
+  }else bar.classList.add('hidden');
 }
 function setHeat(){
   var hot=intensity>5.5;
@@ -363,17 +387,24 @@ function setHeat(){
   $('waveGlow').setAttribute('stroke',hot?'#F0B060':'#7FE8D8');
   $('waveGlow').style.filter='drop-shadow(0 0 9px '+(hot?'rgba(240,176,96,.9)':'rgba(127,232,216,.9)')+')';
 }
-function startWave(){
-  startTs=Date.now();seconds=0;intensity=6;samples=[{t:0,v:6}];outcome=null;
-  $('intensity').value=6;$('intVal').textContent='6';$('timer').textContent='0:00';
-  $('peakLive').textContent='пик 6';
+function startWave(resume){
+  if(resume){
+    startTs=resume.startTs;seconds=resume.seconds||0;intensity=resume.intensity||6;
+    samples=(resume.samples&&resume.samples.length)?resume.samples:[{t:0,v:intensity}];
+  }else{
+    startTs=Date.now();seconds=0;intensity=6;samples=[{t:0,v:6}];
+  }
+  outcome=null;
+  $('intensity').value=intensity;$('intVal').textContent=intensity;$('timer').textContent=fmt(seconds);
+  $('peakLive').textContent='пик '+peakOf(samples);
   $('noteText').value='';setHeat();
   var pi=Math.floor(Math.random()*POINTERS.length);
   $('pointer').textContent=POINTERS[pi];
   show('wave');buzz(30);
   startBreath();
+  saveLive();
   tTimer=setInterval(function(){seconds++;$('timer').textContent=fmt(seconds);
-    if(seconds%30===0)samples.push({t:seconds,v:intensity});},1000);
+    if(seconds%30===0)samples.push({t:seconds,v:intensity});saveLive();},1000);
   tPointer=setInterval(function(){pi=(pi+1)%POINTERS.length;
     var p=$('pointer');p.style.opacity=0;
     setTimeout(function(){p.textContent=POINTERS[pi];p.style.opacity=.85},800);},24000);
@@ -384,7 +415,7 @@ function onIntensity(){
   $('intVal').textContent=intensity;
   samples.push({t:seconds,v:intensity});
   $('peakLive').textContent='пик '+peakOf(samples);
-  setHeat();
+  setHeat();saveLive();
 }
 function drawLoop(){
   var W=400,H=150,mid=H*0.60,a=5+(intensity/10)*46,pts=[];
@@ -413,7 +444,7 @@ function startBreath(){
   },4000);
 }
 function stopLoops(){clearInterval(tTimer);clearInterval(tPointer);clearInterval(tBreath);cancelAnimationFrame(raf)}
-function cancelWave(){stopLoops();show('home');renderHome()}
+function cancelWave(){stopLoops();clearLive();show('home');renderHome()}
 
 function smoothPath(pts){
   if(pts.length<2)return'';
@@ -441,7 +472,7 @@ function renderCurve(){
   c.appendChild(path);
 }
 function finishWave(result){
-  stopLoops();outcome=result;buzz(result==='watched'?[20,60,20]:60);
+  stopLoops();clearLive();outcome=result;buzz(result==='watched'?[20,60,20]:60);
   $('noteTitle').textContent=result==='watched'?'Волна прошла.':'Записано без стыда.';
   $('noteStats').textContent=fmt(seconds)+' · пик '+peakOf(samples)+'/10';
   renderCurve();show('note');
@@ -491,7 +522,18 @@ function exportData(){
   }else{window.prompt('Скопируй вручную:',txt)}
 }
 
-$('startBtn').addEventListener('click',startWave);
+$('startBtn').addEventListener('click',function(){startWave()});
+$('resumeBtn').addEventListener('click',function(){
+  var d=null;try{d=JSON.parse(localStorage.getItem(LIVE))}catch(e){}
+  if(d&&d.startTs)startWave(d);else refreshResume();
+});
+$('resumePassed').addEventListener('click',function(){
+  var d=null;try{d=JSON.parse(localStorage.getItem(LIVE))}catch(e){}
+  if(!d||!d.startTs){refreshResume();return}
+  startTs=d.startTs;seconds=d.seconds||0;intensity=d.intensity||6;
+  samples=(d.samples&&d.samples.length)?d.samples:[{t:0,v:intensity}];
+  finishWave('watched');
+});
 $('historyBtn').addEventListener('click',function(){show('history');renderHistory()});
 $('backBtn').addEventListener('click',function(){show('home');renderHome()});
 $('cancelBtn').addEventListener('click',cancelWave);
