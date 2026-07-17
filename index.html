@@ -152,6 +152,13 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
     box-shadow:0 0 20px rgba(167,154,255,.12)}
   .resume-t{font-size:14px;opacity:.85;text-align:center;margin-bottom:2px}
   .resume .btn{margin-top:8px}
+  .insights{margin:16px 0 4px}
+  .ins-h{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:3px;
+    text-transform:uppercase;opacity:.4;margin-bottom:8px}
+  .insight{font-size:14px;line-height:1.5;opacity:.82;padding:10px 13px;margin-bottom:8px;
+    border-left:2px solid rgba(127,232,216,.5);border-radius:0 12px 12px 0;
+    background:linear-gradient(90deg,rgba(127,232,216,.07),transparent)}
+  .insight b{color:var(--glow);font-weight:600}
   @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -244,6 +251,7 @@ width:100%;border-radius:16px;padding:15px;font-size:15px;resize:vertical;min-he
     <p class="legend" id="chartLegend" style="display:none">
       <span style="color:#7FE8D8">■</span> рассмотрел&nbsp;&nbsp;<span style="color:#F0B060">■</span> закурил
     </p>
+    <div id="insights" class="insights"></div>
     <div id="entries"></div>
     <p class="muted hidden" id="emptyMsg" style="margin-top:12px">
       Пока пусто. Первая волна сама придёт — открой приложение в этот момент.
@@ -512,6 +520,41 @@ function renderHistory(){
     fmt(wv.dur)+' · пик '+wv.peak+'</span></div>'+
     (wv.note?'<p class="note">'+wv.note.replace(/</g,'&lt;')+'</p>':'')+'</div>';
   }).join('');
+  renderInsights();
+}
+function avgOf(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:0}
+function hourBucket(h){if(h>=5&&h<11)return'утром';if(h>=11&&h<17)return'днём';if(h>=17&&h<23)return'вечером';return'ночью'}
+function renderInsights(){
+  var box=$('insights');box.innerHTML='';
+  var w=waves.filter(function(x){return x.outcome==='watched'});
+  var lines=[];
+  if(waves.length>=3){
+    var b={утром:0,днём:0,вечером:0,ночью:0};
+    waves.forEach(function(x){b[hourBucket(new Date(x.ts).getHours())]++});
+    var top=Object.keys(b).sort(function(a,c){return b[c]-b[a]})[0];
+    if(b[top]>0)lines.push('Волны чаще приходят <b>'+top+'</b> — '+Math.round(b[top]/waves.length*100)+'%.');
+  }
+  var subs=[];
+  w.forEach(function(x){
+    var c=x.curve;if(!c||c.length<2)return;
+    var pk=x.peak||peakOf(c),half=pk/2,reached=false;
+    for(var i=0;i<c.length;i++){
+      if(c[i].v>=pk)reached=true;
+      if(reached&&c[i].v<=half){subs.push(c[i].t);break}
+    }
+  });
+  if(subs.length>=2)lines.push('Средняя волна спадает к <b>'+fmt(Math.round(avgOf(subs)))+'</b> — переждать реально.');
+  if(w.length>=4){
+    var h=Math.floor(w.length/2);
+    var af=avgOf(w.slice(0,h).map(function(x){return x.peak}));
+    var al=avgOf(w.slice(w.length-h).map(function(x){return x.peak}));
+    if(al<=af-1)lines.push('Пики слабеют: было <b>'+af.toFixed(1)+'</b> → стало <b>'+al.toFixed(1)+'</b>.');
+    else if(al>=af+1)lines.push('Пики растут: <b>'+af.toFixed(1)+'</b> → <b>'+al.toFixed(1)+'</b>. Будь бережнее к себе.');
+    else lines.push('Пики держатся около <b>'+al.toFixed(1)+'</b>/10.');
+  }
+  if(!lines.length){box.style.display='none';return}
+  box.style.display='block';
+  box.innerHTML='<p class="ins-h">Что видно</p>'+lines.map(function(l){return '<p class="insight">'+l+'</p>'}).join('');
 }
 function exportData(){
   var txt=JSON.stringify(waves);
